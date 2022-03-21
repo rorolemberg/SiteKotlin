@@ -3,6 +3,7 @@ package br.com.site.imobiliario.service
 import br.com.site.imobiliario.dto.AtualizacaoTopicoForm
 import br.com.site.imobiliario.dto.TopicoForm
 import br.com.site.imobiliario.dto.TopicoView
+import br.com.site.imobiliario.exception.NotFoundException
 import br.com.site.imobiliario.mapper.TopicoFormMappper
 import br.com.site.imobiliario.mapper.TopicoViewMapper
 import br.com.site.imobiliario.model.Topico
@@ -14,7 +15,8 @@ import kotlin.collections.ArrayList
 class TopicoService(
     private var topicos: List<Topico> = ArrayList(),
     private val topicoViewMapper: TopicoViewMapper,
-    private val topicoFormMapper: TopicoFormMappper
+    private val topicoFormMapper: TopicoFormMappper,
+    private val notFoundMessage: String = "Topico nao encontrado"
 ) {
 
     fun listar(): List<TopicoView> {
@@ -26,26 +28,36 @@ class TopicoService(
     fun buscarPorId(id: Long): TopicoView {
         val topico = topicos.stream().filter { t ->
             t.id == id
-        }.findFirst().get()
+        }.findFirst().orElseThrow{NotFoundException(notFoundMessage)}
         return topicoViewMapper.map(topico)
     }
 
-    fun cadastrar(form: TopicoForm) {
+    fun cadastrar(form: TopicoForm): TopicoView {
         val topico = topicoFormMapper.map(form)
         topico.id = topicos.size.toLong() + 1
         topicos = topicos.plus(topico)
+        return topicoViewMapper.map(topico)
     }
 
-    fun atualizar(form: AtualizacaoTopicoForm) {
+    fun atualizar(form: AtualizacaoTopicoForm): TopicoView {
         val topico = topicos.stream().filter { t ->
             t.id == form.id
-        }.findFirst().get()
-        topicos = topicos.minus(topico).plus(Topico(
+        }.findFirst().orElseThrow{NotFoundException(notFoundMessage)}
+        val topicoAtualizado = Topico(
             id = form.id,
             titulo = form.titulo,
             mensagem = form.mensagem,
             autor = topico.autor,
             dataCriacao = topico.dataCriacao
-        ))
+        )
+        topicos = topicos.minus(topico).plus(topicoAtualizado)
+        return topicoViewMapper.map(topicoAtualizado)
+    }
+
+    fun deletar(id: Long) {
+        val topico = topicos.stream().filter { t ->
+            t.id == id
+        }.findFirst().orElseThrow{NotFoundException(notFoundMessage)}
+        topicos = topicos.minus(topico)
     }
 }
