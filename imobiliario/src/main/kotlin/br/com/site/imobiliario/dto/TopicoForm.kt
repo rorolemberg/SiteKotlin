@@ -5,8 +5,8 @@ import javax.validation.constraints.NotEmpty
 import javax.validation.constraints.Size
 
 data class TopicoForm (
-        @field:NotEmpty
-        @field:Size(min = 1, max = 100)
+        @field:NotEmpty(message = "Nao pode ser em branco")
+        @field:Size(min = 1, max = 100, message = "Titulo de deve ter no maximo 100")
         val titulo: String,
         @field:NotEmpty
         @field:Size(min = 1, max = 100)
